@@ -6,6 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.router import api_router
+
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -39,3 +41,6 @@ app.add_middleware(
 @app.get("/health", tags=["health"])
 async def health_check():
     return {"status": "ok", "app": settings.APP_NAME, "version": settings.APP_VERSION}
+
+# Include API v1 router
+app.include_router(api_router, prefix="/api/v1")
