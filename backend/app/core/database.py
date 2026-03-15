@@ -1,6 +1,7 @@
 """
 Database connection — SQLAlchemy async engine + Supabase client.
 """
+import uuid
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import NullPool
 from supabase import create_client, Client
@@ -21,9 +22,12 @@ engine = create_async_engine(
             "statement_timeout": "30000",
             "idle_in_transaction_session_timeout": "60000",
         },
-        # These are crucial for PgBouncer in transaction mode (Supabase connection pooler)
-        "prepared_statement_cache_size": 0,
+        # Required for PgBouncer in transaction mode (Supabase connection pooler, port 6543).
+        # statement_cache_size=0 disables asyncpg's cache, but asyncpg still creates named
+        # prepared statements per query. prepared_statement_name_func with UUID ensures
+        # each statement gets a unique name, avoiding DuplicatePreparedStatementError.
         "statement_cache_size": 0,
+        "prepared_statement_name_func": lambda: f"__asyncpg_{uuid.uuid4().hex}__",
     },
 )
 

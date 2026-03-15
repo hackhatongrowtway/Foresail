@@ -48,7 +48,6 @@ class JiraProject(Base):
     jira_api_token_encrypted = Column(Text, nullable=True) # Will store the encrypted token
     auth_type = Column(Text, nullable=False, default="basic")
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     project = relationship("Project", back_populates="jira_projects")
 

@@ -39,6 +39,7 @@ class JiraProjectBase(BaseModel):
     jira_url: str
 
 class JiraProjectCreate(JiraProjectBase):
+    project_id: UUID
     jira_email: Optional[str] = None
     jira_api_token: Optional[str] = None # Plain token input (API only, never returned)
 
