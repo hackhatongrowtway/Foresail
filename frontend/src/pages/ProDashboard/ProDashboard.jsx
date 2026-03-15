@@ -17,71 +17,6 @@ import { fetchProjects } from '../../services/projectsService';
 import { fetchRecentAlerts } from '../../services/riskService';
 import './ProDashboard.css';
 
-// ─── Mock data — substitua pelas chamadas reais da API ───────────────────────
-const MOCK_PROJECTS = [
-  {
-    id: '1', name: 'api-gateway', riskScore: 82, trend: 'up',
-    lastAnalysis: 'há 2 horas', alertCount: 3, isEstimated: false,
-  },
-  {
-    id: '2', name: 'auth-service', riskScore: 54, trend: 'down',
-    lastAnalysis: 'há 5 horas', alertCount: 1, isEstimated: false,
-  },
-  {
-    id: '3', name: 'data-pipeline', riskScore: 22, trend: 'stable',
-    lastAnalysis: 'há 1 dia', alertCount: 0, isEstimated: false,
-  },
-  {
-    id: '4', name: 'frontend-app', riskScore: 68, trend: 'up',
-    lastAnalysis: 'há 3 horas', alertCount: 2, isEstimated: true,
-  },
-  {
-    id: '5', name: 'payments-svc', riskScore: 31, trend: 'stable',
-    lastAnalysis: 'há 6 horas', alertCount: 0, isEstimated: false,
-  },
-  {
-    id: '6', name: 'notification-worker', riskScore: 15, trend: 'down',
-    lastAnalysis: 'há 12 horas', alertCount: 0, isEstimated: false,
-  },
-];
-
-const MOCK_ALERTS = [
-  {
-    id: 'a1', severity: 'critical', title: '12 PRs sem revisão há mais de 72h',
-    probability: 91,
-    description: 'O repositório api-gateway acumulou 12 pull requests sem nenhum reviewer atribuído. O tempo médio de espera ultrapassou 3 dias, o que indica gargalo no processo de code review.',
-    evidence: [
-      { type: 'pr', id: '#341', url: '#', excerpt: 'feat: rate limiting middleware' },
-      { type: 'pr', id: '#338', url: '#', excerpt: 'fix: jwt expiry race condition' },
-      { type: 'commit', id: 'a1b2c3d', url: '#', excerpt: 'Merge branch hotfix/auth-bypass' },
-    ],
-    timestamp: '14/03/2025 às 14:32',
-    project: 'api-gateway',
-  },
-  {
-    id: 'a2', severity: 'warning', title: 'Queda de 40% na velocidade de sprint',
-    probability: 74,
-    description: 'O time perdeu significativa capacidade de entrega nas últimas 2 sprints. Issues abertas aumentaram 3x enquanto fechamentos caíram. Possível débito técnico acumulado.',
-    evidence: [
-      { type: 'issue', id: 'PROJ-412', url: '#', excerpt: 'Sprint 23 — 8 issues carryover' },
-      { type: 'issue', id: 'PROJ-409', url: '#', excerpt: 'Blocked: depends on auth refactor' },
-    ],
-    timestamp: '14/03/2025 às 11:15',
-    project: 'frontend-app',
-  },
-  {
-    id: 'a3', severity: 'info', title: 'Padrão de linguagem de urgência detectado',
-    probability: 58,
-    description: 'Comentários em issues e PRs apresentam termos como "urgente", "produção quebrada" e "hotfix" com frequência 2× acima do normal nas últimas 48h.',
-    evidence: [
-      { type: 'issue', id: 'PROJ-417', url: '#', excerpt: '"urgente: login falhando em prod"' },
-      { type: 'pr',    id: '#344', url: '#', excerpt: 'hotfix: null pointer on checkout' },
-    ],
-    timestamp: '14/03/2025 às 09:47',
-    project: 'auth-service',
-  },
-];
-
 // ─── Derived stats ────────────────────────────────────────────────────────────
 function deriveStats(projects) {
   const total     = projects.length;
@@ -153,12 +88,18 @@ function ProDashboard({ user, theme, onToggleTheme, onNavigate, onLogout }) {
       setLoading(true);
       setError(null);
       try {
-        // TODO: Replace mocks with real API calls:
-        // const [projs, recentAlerts] = await Promise.all([fetchProjects(), fetchRecentAlerts()]);
-        await new Promise(r => setTimeout(r, 900)); // simulates network
+        const [projs, recentAlerts] = await Promise.allSettled([
+          fetchProjects(),
+          fetchRecentAlerts(),
+        ]);
+
         if (!cancelled) {
-          setProjects(MOCK_PROJECTS);
-          setAlerts(MOCK_ALERTS);
+          setProjects(projs.status === 'fulfilled' ? projs.value : []);
+          setAlerts(recentAlerts.status === 'fulfilled' ? recentAlerts.value : []);
+
+          if (projs.status === 'rejected') {
+            setError(projs.reason?.message ?? 'Erro ao carregar projetos.');
+          }
         }
       } catch (err) {
         if (!cancelled) setError(err.message);
