@@ -86,10 +86,9 @@ function initCanvas(canvas, theme) {
   resize();
   particles = Array.from({ length: 55 }, () => new Particle());
   loop();
-  const handleResize = () => { resize(); particles.forEach(p => p.reset()); };
-  window.addEventListener('resize', handleResize);
+  window.addEventListener('resize', () => { resize(); particles.forEach(p => p.reset()); });
 
-  return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', handleResize); };
+  return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
 }
 
 // Inject floating geometric SVG shapes

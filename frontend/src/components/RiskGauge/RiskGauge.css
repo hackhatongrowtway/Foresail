@@ -1,0 +1,12 @@
+/* components/RiskGauge/RiskGauge.css */
+
+.risk-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.risk-gauge--sm svg { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08)); }
+.risk-gauge--md svg { filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08)); }
+.risk-gauge--lg svg { filter: drop-shadow(0 6px 16px rgba(0,0,0,0.1)); }

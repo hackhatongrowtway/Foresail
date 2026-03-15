@@ -26,11 +26,6 @@ function LoginPage({ onNavigate }) {
       } else {
         setErrorMsg(error.message);
       }
-    } else {
-      // Sucesso! O redirecionamento você (usuário) mencionou que fará depois,
-      // mas vamos adicionar um log ou alert básico apenas para validar a integração.
-      alert(`Login bem-sucedido! Bem-vindo de volta.`);
-      // onNavigate('dashboard'); // Exemplo
     }
   };
 

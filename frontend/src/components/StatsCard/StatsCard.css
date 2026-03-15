@@ -1,0 +1,78 @@
+/* components/StatsCard/StatsCard.css */
+
+.stats-card {
+  background: var(--color-surface-1);
+  border: var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-xs);
+  animation: fadeInUp 300ms ease both;
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.stats-card:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-border-default);
+}
+
+.stats-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.stats-card__label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.stats-card__icon {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-tertiary);
+}
+
+.stats-card__value {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  letter-spacing: var(--tracking-tight);
+  font-feature-settings: "tnum";
+  margin-bottom: var(--space-1);
+  line-height: var(--leading-tight);
+}
+
+.stats-card__delta {
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stats-card__delta--positive { color: var(--color-status-success); }
+.stats-card__delta--negative { color: var(--color-status-error); }
+.stats-card__delta--neutral  { color: var(--color-text-tertiary); }
+
+.stats-card__delta-arrow { font-style: normal; }
+
+/* Loading skeleton */
+.stats-card--loading { pointer-events: none; }
+
+.stats-card__skeleton {
+  background: linear-gradient(90deg,
+    var(--color-surface-2) 25%,
+    var(--color-border-subtle) 50%,
+    var(--color-surface-2) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.4s ease infinite;
+}
+
+.stats-card__skeleton--label  { height: 11px; width: 60%; margin-bottom: var(--space-3); }
+.stats-card__skeleton--value  { height: 36px; width: 45%; margin-bottom: var(--space-2); }
+.stats-card__skeleton--delta  { height: 13px; width: 70%; }

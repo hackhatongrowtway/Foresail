@@ -1,0 +1,60 @@
+/* components/RiskBadge/RiskBadge.css */
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  border-width: 0.5px;
+  border-style: solid;
+}
+
+/* Sizes */
+.risk-badge--sm { font-size: 10px; padding: 2px 7px; }
+.risk-badge--md { font-size: 11px; padding: 3px 9px; }
+
+/* Dot */
+.risk-badge__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Variants */
+.risk-badge--healthy {
+  color: var(--color-risk-healthy);
+  background: var(--color-risk-healthy-bg);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.risk-badge--attention {
+  color: var(--color-risk-attention);
+  background: var(--color-risk-attention-bg);
+  border-color: rgba(234, 179, 8, 0.2);
+}
+
+.risk-badge--warning {
+  color: var(--color-risk-warning);
+  background: var(--color-risk-warning-bg);
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+.risk-badge--critical {
+  color: var(--color-risk-critical);
+  background: var(--color-risk-critical-bg);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Estimated indicator */
+.risk-badge__estimated {
+  color: var(--color-estimated);
+  font-style: normal;
+  margin-left: 1px;
+}
