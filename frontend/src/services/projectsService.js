@@ -51,7 +51,7 @@ export async function fetchProject(projectId) {
 }
 
 /**
- * Create a new project.
+ * Create a new project. Throws with detail message if name is duplicate (HTTP 409).
  * @param {{ name: string, github_repo: string, jira_project_key?: string }} payload
  * @returns {Promise<Object>} created project
  */
@@ -64,6 +64,45 @@ export async function createProject(payload) {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: 'Erro ao criar projeto.' }));
+    throw new Error(error.detail ?? `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+/**
+ * Delete a project by ID.
+ * @param {string} projectId
+ * @returns {Promise<Object>} { deleted: true, project: {...} }
+ */
+export async function deleteProject(projectId) {
+  const res = await fetch(`${BASE_URL}/projects/${projectId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Erro ao excluir projeto.' }));
+    throw new Error(error.detail ?? `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+/**
+ * Trigger a new analysis run for a project.
+ * Falls back gracefully if the endpoint doesn't exist yet.
+ * @param {string} projectId
+ * @returns {Promise<Object>}
+ */
+export async function runAnalysis(projectId) {
+  const res = await fetch(`${BASE_URL}/projects/${projectId}/analyse`, {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Erro ao executar análise.' }));
     throw new Error(error.detail ?? `HTTP ${res.status}`);
   }
 

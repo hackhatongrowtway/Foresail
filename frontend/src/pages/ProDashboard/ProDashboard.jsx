@@ -271,7 +271,7 @@ function ProDashboard({ user, theme, onToggleTheme, onNavigate, onLogout }) {
             <SectionHeader
               title="Projetos"
               count={loading ? null : filteredProjects.length}
-              action={{ label: '+ Novo projeto', onClick: () => {} }}
+              action={{ label: '+ Novo projeto', onClick: () => window.location.href = '/auth_flow.html' }}
             />
 
             {/* Filter chips */}
@@ -300,7 +300,7 @@ function ProDashboard({ user, theme, onToggleTheme, onNavigate, onLogout }) {
                 description={activeFilter === 'all'
                   ? 'Conecte um repositório GitHub para começar a monitorar.'
                   : `Nenhum projeto com classificação "${FILTERS.find(f => f.id === activeFilter)?.label}".`}
-                action={activeFilter === 'all' ? { label: '+ Adicionar projeto', onClick: () => {} } : null}
+                action={activeFilter === 'all' ? { label: '+ Adicionar projeto', onClick: () => window.location.href = '/auth_flow.html' } : null}
               />
             ) : (
               <div className="dashboard__projects-grid">

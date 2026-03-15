@@ -289,3 +289,50 @@ CREATE POLICY "org_logs_select" ON public.activity_logs
             SELECT organization_id FROM public.profiles WHERE id = auth.uid()
         )
     );
+
+
+-- Tabela de Ingestion Runs (Histórico do Painel de Ingestão)
+CREATE TABLE ingestion_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    source VARCHAR(50) NOT NULL, -- 'github' ou 'jira'
+    status VARCHAR(50) NOT NULL DEFAULT 'running', -- 'running', 'success', 'error'
+    started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMPTZ,
+    events_count INTEGER DEFAULT 0,
+    errors_count INTEGER DEFAULT 0,
+    error_logs JSONB -- Guardará os logs de erros em formato JSON
+);
+
+CREATE INDEX idx_ingestion_runs_project_id ON ingestion_runs(project_id);
+-- Tabela de Tickets (Armazena as Issues do Jira e PRs do GitHub genéricos)
+CREATE TABLE tickets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    source VARCHAR(50) NOT NULL, -- 'jira' ou 'github_pr'
+    external_id VARCHAR(255) NOT NULL, -- 'PROJ-123' ou 'PR#45'
+    title TEXT NOT NULL,
+    status VARCHAR(100) NOT NULL,
+    author VARCHAR(255),
+    created_at_ext TIMESTAMPTZ,
+    updated_at_ext TIMESTAMPTZ,
+    metadata_json JSONB -- Guardará labels, pontos, arrays brutos do JSON original
+);
+
+CREATE INDEX idx_tickets_project_id ON tickets(project_id);
+CREATE INDEX idx_tickets_external_id ON tickets(external_id);
+
+-- Tabela de Commits (Armazena histórico de repositórios do GitHub)
+CREATE TABLE commits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    repository_id UUID NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+    commit_hash VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    author VARCHAR(255),
+    date_ext TIMESTAMPTZ
+);
+CREATE INDEX idx_commits_project_id ON commits(project_id);
+CREATE INDEX idx_commits_hash ON commits(commit_hash);
+
+ALTER TABLE projects ADD COLUMN health_status VARCHAR(50) NOT NULL DEFAULT 'unknown';

@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Foresail — Code Risk Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090b;--bg1:#0f1014;--bg2:#131620;--card:#15181f;
+  --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);
+  --fg:#e2e8f0;--fg2:#64748b;--fg3:#2a3650;
+  --blue:#3b82f6;--blue2:#93c5fd;
+  --green:#22c55e;--gbg:rgba(34,197,94,.1);
+  --amber:#f59e0b;--abg:rgba(245,158,11,.1);
+  --orange:#f97316;--obg:rgba(249,115,22,.1);
+  --red:#ef4444;--rbg:rgba(239,68,68,.1);
+  --teal:#14b8a6;--purple:#a78bfa;
+  --r:8px;--rl:13px;--rxl:18px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:'Geist',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% -5%,rgba(59,130,246,.1),transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 105%,rgba(167,139,250,.07),transparent 55%),
+    repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.016) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.016) 40px);}
+
+/* ── Screens ─────────────────────────────── */
+#s-auth{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+#s-auth.on{display:flex}
+#s-load{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+#s-load.on{display:flex}
+#s-report{display:none}
+#s-report.on{display:block}
+
+/* ── Brand ───────────────────────────────── */
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:36px;animation:rise .5s ease both}
+.brand-name{font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.2em;color:var(--fg2)}
+
+/* ── Auth panel ──────────────────────────── */
+.auth-shell{position:relative;z-index:1;width:100%;max-width:500px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--rxl);overflow:hidden;animation:rise .5s .06s ease both;opacity:0}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.tab{padding:13px 0;text-align:center;font-size:12px;font-weight:500;color:var(--fg2);cursor:pointer;background:none;border:none;font-family:'Geist',sans-serif;position:relative;transition:color .2s}
+.tab.active{color:var(--fg)}
+.tab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(--blue)}
+.tab.done .tchk{display:inline-flex;width:13px;height:13px;border-radius:50%;background:var(--green);color:var(--bg);align-items:center;justify-content:center;font-size:8px;margin-right:5px}
+.tchk{display:none}
+.pbody{padding:26px}
+.step-title{font-size:16px;font-weight:600;letter-spacing:-.02em;margin-bottom:5px}
+.step-desc{font-size:12px;color:var(--fg2);line-height:1.65;margin-bottom:22px}
+.step-desc a{color:var(--blue2);text-decoration:none}
+.step-desc a:hover{text-decoration:underline}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.flabel{font-size:11px;font-weight:500;color:var(--fg2);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between}
+.flabel-hint{font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--fg3)}
+.irow{position:relative}
+.iico{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.35}
+input[type=text],input[type=password],input[type=url]{width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r);color:var(--fg);font-family:'Geist',sans-serif;font-size:13px;padding:10px 40px 10px 34px;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus{border-color:rgba(59,130,246,.5);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+input::placeholder{color:var(--fg3)}
+.itoggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg2);display:flex;align-items:center;padding:3px}
+.itoggle:hover{color:var(--fg)}
+.msg-box{display:flex;gap:9px;align-items:flex-start;border-radius:var(--r);padding:11px 13px;font-size:12px;line-height:1.6;margin-bottom:14px;animation:rise .2s ease both}
+.msg-box svg{flex-shrink:0;margin-top:1px;width:13px;height:13px}
+.msg-box.error{background:var(--rbg);border:1px solid rgba(239,68,68,.2);color:var(--red)}
+.msg-box.success{background:var(--gbg);border:1px solid rgba(34,197,94,.2);color:var(--green)}
+.msg-box.info{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);color:var(--blue2)}
+.msg-box.warn{background:var(--abg);border:1px solid rgba(245,158,11,.2);color:var(--amber)}
+.msg-action{font-size:11px;margin-top:3px;opacity:.8;display:block}
+.tok-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;display:flex;align-items:center;gap:11px;margin-bottom:14px;animation:rise .3s ease both}
+.tok-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));overflow:hidden;flex-shrink:0}
+.tok-av img{width:100%;height:100%;object-fit:cover}
+.tok-login{font-size:13px;font-weight:500}
+.tok-meta{font-size:10px;color:var(--fg2);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap}
+.tok-scope{font-family:'Geist Mono',monospace;font-size:9px;background:rgba(59,130,246,.12);color:var(--blue2);border-radius:3px;padding:1px 5px}
+.tok-rate{font-family:'Geist Mono',monospace;font-size:9px;background:var(--gbg);color:var(--green);border-radius:3px;padding:1px 5px}
+.tok-clear{margin-left:auto;background:none;border:1px solid var(--line2);border-radius:5px;padding:4px 9px;color:var(--fg2);font-size:11px;cursor:pointer;font-family:'Geist',sans-serif;transition:all .2s;white-space:nowrap}
+.tok-clear:hover{border-color:var(--red);color:var(--red)}
+.scope-warn{background:var(--abg);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:10px 13px;font-size:12px;color:var(--amber);line-height:1.6;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px}
+.btn-p{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-family:'Geist',sans-serif;font-size:13px;font-weight:500;padding:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .2s,transform .15s}
+.btn-p:hover:not(:disabled){opacity:.87;transform:translateY(-1px)}
+.btn-p:active:not(:disabled){transform:translateY(0)}
+.btn-p:disabled{opacity:.4;cursor:not-allowed}
+.btn-s{width:100%;background:none;color:var(--fg2);border:1px solid var(--line2);border-radius:var(--r);font-family:'Geist',sans-serif;font-size:12px;padding:9px;cursor:pointer;transition:all .2s;margin-top:7px}
+.btn-s:hover{border-color:var(--line);color:var(--fg)}
+.footer-note{margin-top:14px;text-align:center;font-size:11px;color:var(--fg3);animation:rise .5s .3s ease both;opacity:0}
+
+/* ── Loading ────────────────────────────── */
+.load-card{position:relative;z-index:1;width:100%;max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:var(--rxl);padding:36px}
+.psteps{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.pstep{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:var(--r);border:1px solid transparent;transition:all .35s}
+.pstep.idle .pico{background:var(--fg3);color:var(--bg)}
+.pstep.active{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.18)}
+.pstep.active .pico{background:var(--blue);animation:pulse .9s ease-in-out infinite}
+.pstep.done{background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.12)}
+.pstep.done .pico{background:var(--green)}
+.pstep.err .pico{background:var(--red)}
+.pico{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .35s}
+.ptitle{font-size:12px;font-weight:500}
+.pdesc{font-size:11px;color:var(--fg2);margin-top:1px}
+.pstep.idle .ptitle,.pstep.idle .pdesc{color:var(--fg3)}
+.pchk{font-size:11px;color:var(--green);margin-left:auto;opacity:0;transition:opacity .25s}
+.pstep.done .pchk{opacity:1}
+.pbar{height:2px;background:var(--line);border-radius:1px;overflow:hidden}
+.pbar-f{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:1px;width:0%;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.pbar-lbl{font-size:11px;color:var(--fg2);margin-top:6px;font-family:'Geist Mono',monospace}
+
+/* ── Report ─────────────────────────────── */
+.rep-nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:13px 32px;background:rgba(9,9,11,.9);border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}
+.btn-back{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--line2);border-radius:6px;padding:6px 12px;color:var(--fg2);font-family:'Geist',sans-serif;font-size:12px;cursor:pointer;transition:all .2s}
+.btn-back:hover{border-color:var(--blue);color:var(--fg)}
+.rep-ts{font-family:'Geist Mono',monospace;font-size:11px;color:var(--fg3)}
+.rep-body{max-width:1060px;margin:0 auto;padding:32px 24px 80px;display:flex;flex-direction:column;gap:28px;animation:rise .5s ease both}
+.slabel{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.13em;color:var(--fg2);text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:8px}
+.slabel::after{content:'';flex:1;height:1px;background:var(--line)}
+.cnt-pill{background:rgba(59,130,246,.1);color:var(--blue2);font-size:10px;font-family:'Geist Mono',monospace;border-radius:20px;padding:1px 7px}
+.hero-row{display:flex;align-items:center;gap:28px;background:var(--card);border:1px solid var(--line);border-radius:var(--rxl);padding:26px 28px}
+.score-ring-wrap{flex-shrink:0;position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.score-ring-wrap svg{position:absolute;inset:0}
+.score-center{position:absolute;display:flex;flex-direction:column;align-items:center}
+.score-n{font-family:'Geist Mono',monospace;font-size:28px;font-weight:700;line-height:1}
+.score-l{font-size:9px;color:var(--fg2);letter-spacing:.06em;margin-top:2px}
+.risk-pill{display:inline-block;font-family:'Geist Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;border-radius:20px;padding:3px 10px;margin-bottom:9px}
+.repo-nm{font-family:'Geist Mono',monospace;font-size:16px;font-weight:500;margin-bottom:7px;word-break:break-all}
+.summary-txt{font-size:13px;color:var(--fg2);line-height:1.75}
+.hero-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.hchip{font-family:'Geist Mono',monospace;font-size:10px;border:1px solid var(--line2);border-radius:5px;padding:2px 9px;color:var(--fg2)}
+.hchip span{color:var(--fg)}
+.dim6{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dbar{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px}
+.dbar-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.dbar-name{font-size:11px;color:var(--fg2)}
+.dbar-val{font-family:'Geist Mono',monospace;font-size:13px;font-weight:500}
+.dbar-track{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.dbar-fill{height:100%;border-radius:2px;transition:width 1.3s cubic-bezier(.4,0,.2,1)}
+.chart3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px}
+.chart-title{font-size:10px;color:var(--fg2);margin-bottom:12px;font-family:'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.chart-h{position:relative;height:165px}
+.stat4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.scard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;text-align:center}
+.scard-ico{font-size:16px;margin-bottom:5px}
+.scard-val{font-family:'Geist Mono',monospace;font-size:24px;font-weight:700;line-height:1}
+.scard-lbl{font-size:11px;color:var(--fg2);margin-top:4px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.list-card{background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px}
+.list-head{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--fg2);text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between}
+.li{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:none;padding-bottom:0}
+.li-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.li-title{font-size:12px;font-weight:500;margin-bottom:2px}
+.li-desc{font-size:11px;color:var(--fg2);line-height:1.55}
+.li-meta{font-family:'Geist Mono',monospace;font-size:10px;color:var(--fg3);margin-top:3px}
+.sev-pill{display:inline-block;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:.05em;border-radius:3px;padding:2px 6px;margin-top:3px}
+.gp-ic{width:20px;height:20px;border-radius:50%;flex-shrink:0;margin-top:1px;background:var(--gbg);display:flex;align-items:center;justify-content:center}
+.gp-ic svg{width:10px;height:10px}
+.imp-list{background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px}
+.imp-item{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.imp-item:last-child{border-bottom:none;padding-bottom:0}
+.pri-tag{font-family:'Geist Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.07em;border-radius:3px;padding:2px 7px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.eff-tag{font-size:10px;color:var(--fg2);border:1px solid var(--line);border-radius:3px;display:inline-block;padding:1px 6px;margin-top:3px}
+.risk4{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.risk-c{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.risk-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px;gap:10px}
+.risk-t{font-size:12px;font-weight:500;line-height:1.35}
+.risk-pct{font-family:'Geist Mono',monospace;font-size:20px;font-weight:700;flex-shrink:0}
+.risk-bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:7px}
+.risk-fill{height:100%;border-radius:2px}
+.risk-d{font-size:11px;color:var(--fg2);line-height:1.55}
+.impact-tag{display:inline-block;font-family:'Geist Mono',monospace;font-size:9px;border-radius:3px;padding:1px 6px;margin-top:4px}
+.stack-row{display:flex;flex-wrap:wrap;gap:7px}
+.st-chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line2);border-radius:7px;padding:7px 12px;font-size:12px;color:var(--fg)}
+.st-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.file-list-card{background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px}
+.file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px;max-height:220px;overflow-y:auto}
+.file-item{font-family:'Geist Mono',monospace;font-size:11px;color:var(--fg2);padding:5px 8px;border-radius:5px;display:flex;align-items:center;gap:7px;transition:background .15s}
+.file-item:hover{background:var(--bg2)}
+.fdot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;opacity:.5}
+.json-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px}
+.json-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+pre{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r);padding:14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--fg2);overflow:auto;max-height:240px;line-height:1.7}
+.btn-copy{background:none;border:1px solid var(--line2);border-radius:6px;padding:6px 14px;color:var(--fg2);font-size:12px;cursor:pointer;font-family:'Geist',sans-serif;transition:all .2s}
+.btn-copy:hover{border-color:var(--blue);color:var(--fg)}
+
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .7s linear infinite;display:inline-block}
+
+@media(max-width:780px){
+  .chart3,.dim6,.two-col,.risk4{grid-template-columns:1fr}
+  .stat4{grid-template-columns:repeat(2,1fr)}
+  .hero-row{flex-direction:column;align-items:flex-start}
+  .rep-nav{padding:12px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1 · AUTH
+══════════════════════════════════════════ -->
+<div id="s-auth" class="on">
+  <div class="auth-shell">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 28 32" fill="none">
+        <rect x="0" y="0" width="28" height="9" rx="4.5" fill="#1B4DFF"/>
+        <rect x="0" y="12" width="20" height="9" rx="4.5" fill="#1B4DFF"/>
+        <circle cx="6" cy="26" r="6" fill="#00E5A0"/>
+      </svg>
+      <span class="brand-name">FORESAIL</span>
+    </div>
+
+    <div class="panel">
+      <div class="tabs">
+        <button class="tab active" id="tab-tok" onclick="goTab('tok')"><span class="tchk" id="chk-tok">✓</span>Token GitHub</button>
+        <button class="tab" id="tab-rep" onclick="goTab('rep')"><span class="tchk" id="chk-rep">✓</span>Repositório</button>
+      </div>
+
+      <div id="pane-tok" class="pbody">
+        <div class="step-title">Autenticação</div>
+        <p class="step-desc">Informe um Personal Access Token do GitHub.<br>
+          Crie em <a href="https://github.com/settings/tokens/new" target="_blank">Settings → Developer settings → Tokens</a>.
+          Para repositórios privados, marque o scope <strong>repo</strong>.</p>
+        <div id="tok-card-wrap" style="display:none"></div>
+        <div id="tok-field">
+          <div class="field">
+            <div class="flabel">Token de acesso <span class="flabel-hint">ghp_ ou github_pat_</span></div>
+            <div class="irow">
+              <svg class="iico" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4.5 4.5 0 00-2 8.5V11l1 3h2l1-3V9.5A4.5 4.5 0 008 1zm0 7a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+              <input type="password" id="tok-in" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false"/>
+              <button class="itoggle" id="eye-btn" onclick="toggleEye()">
+                <svg id="eye-ic" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                  <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="scope-warn" style="display:none" class="scope-warn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"><path d="M8 2l6 12H2L8 2z"/><path d="M8 7v3M8 12v.5"/></svg>
+          <div>Token sem acesso a repos privados. Gere um novo token com scope <code style="font-family:monospace;font-size:10px">repo</code>.</div>
+        </div>
+        <div id="tok-msg"></div>
+        <button class="btn-p" id="btn-val" onclick="doValidate()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2L6 9l-3-3"/></svg>
+          Validar token
+        </button>
+      </div>
+
+      <div id="pane-rep" class="pbody" style="display:none">
+        <div class="step-title">Repositório para análise</div>
+        <p class="step-desc">Informe a URL do repositório. Os arquivos serão coletados via API do GitHub e analisados por IA diretamente no browser.</p>
+        <div class="field">
+          <div class="flabel">URL do repositório</div>
+          <div class="irow">
+            <svg class="iico" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            <input type="url" id="rep-in" placeholder="https://github.com/owner/repo" autocomplete="off" spellcheck="false"/>
+          </div>
+        </div>
+        <div id="rep-msg"></div>
+        <button class="btn-p" id="btn-ana" onclick="doAnalyze()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+          Iniciar análise
+        </button>
+        <button class="btn-s" onclick="goTab('tok')">← Trocar token</button>
+      </div>
+    </div>
+
+    <div class="footer-note">Token em sessionStorage — apagado ao fechar a aba. Nunca enviado a terceiros.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2 · LOADING
+══════════════════════════════════════════ -->
+<div id="s-load">
+  <div class="load-card">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:28px">
+      <div style="position:relative;width:64px;height:64px;margin-bottom:20px">
+        <svg style="position:absolute;inset:0;animation:spin 1.1s linear infinite" width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="var(--line)" stroke-width="5"/>
+          <path d="M32 4a28 28 0 0 1 28 28" stroke="var(--blue)" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <svg style="position:absolute;inset:8px;animation:spin .75s linear infinite reverse" width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="20" stroke="var(--line)" stroke-width="3"/>
+          <path d="M24 4a20 20 0 0 1 20 20" stroke="var(--teal)" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);animation:pulse .9s ease-in-out infinite"></div>
+        </div>
+      </div>
+      <div style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--blue2);margin-bottom:5px;text-align:center;word-break:break-all" id="load-repo">—</div>
+      <div style="font-size:16px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px">Analisando repositório</div>
+      <div style="font-size:12px;color:var(--fg2)">Coletando arquivos e processando com IA</div>
+    </div>
+    <div class="psteps" id="psteps"></div>
+    <div class="pbar"><div class="pbar-f" id="pbar-f"></div></div>
+    <div class="pbar-lbl" id="pbar-lbl">Aguardando...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3 · REPORT
+══════════════════════════════════════════ -->
+<div id="s-report">
+  <nav class="rep-nav">
+    <button class="btn-back" onclick="goBack()">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 8H3M3 8l4-4M3 8l4 4"/></svg>
+      Nova análise
+    </button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 28 32" fill="none">
+        <rect x="0" y="0" width="28" height="9" rx="4.5" fill="#1B4DFF"/>
+        <rect x="0" y="12" width="20" height="9" rx="4.5" fill="#1B4DFF"/>
+        <circle cx="6" cy="26" r="6" fill="#00E5A0"/>
+      </svg>
+      <span class="brand-name">FORESAIL</span>
+    </div>
+    <span class="rep-ts" id="rep-ts"></span>
+  </nav>
+  <div class="rep-body" id="rep-body"></div>
+</div>
+
+<script>
+const GH='https://api.github.com';
+const OR_KEY='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';
+const OR_URL='https://openrouter.ai/api/v1/chat/completions';
+const OR_MDL='google/gemini-2.5-flash-lite-preview-09-2025';
+
+const STEPS=[
+  {id:'p0',title:'Validando token',desc:'Verificando permissões na API do GitHub'},
+  {id:'p1',title:'Metadados do repo',desc:'Branch, linguagem, visibilidade'},
+  {id:'p2',title:'Árvore de arquivos',desc:'Listando e filtrando arquivos do projeto'},
+  {id:'p3',title:'Coletando conteúdo',desc:'Baixando arquivos de código'},
+  {id:'p4',title:'Analisando com IA',desc:'Gemini avaliando qualidade e riscos'},
+];
+
+const SKIP=new Set(['node_modules','.git','dist','build','__pycache__','.next','vendor','venv','.venv','coverage','out','target','.turbo']);
+const EXTS=new Set(['.py','.js','.ts','.jsx','.tsx','.java','.go','.rs','.rb','.php','.cs','.cpp','.c','.h','.swift','.kt','.vue','.html','.css','.scss','.json','.yaml','.yml','.md','.toml','.env.example']);
+
+const SEV={critical:{c:'#ef4444',bg:'rgba(239,68,68,.1)',l:'CRÍTICO'},high:{c:'#f97316',bg:'rgba(249,115,22,.1)',l:'ALTO'},medium:{c:'#f59e0b',bg:'rgba(245,158,11,.1)',l:'MÉDIO'},low:{c:'#22c55e',bg:'rgba(34,197,94,.1)',l:'BAIXO'}};
+const RC={critical:{c:'#ef4444',bg:'rgba(239,68,68,.1)',l:'RISCO CRÍTICO'},high:{c:'#f97316',bg:'rgba(249,115,22,.1)',l:'ALTO RISCO'},medium:{c:'#f59e0b',bg:'rgba(245,158,11,.1)',l:'RISCO MÉDIO'},low:{c:'#22c55e',bg:'rgba(34,197,94,.1)',l:'BAIXO RISCO'}};
+const PRI={high:{c:'#ef4444',bg:'rgba(239,68,68,.1)'},medium:{c:'#f59e0b',bg:'rgba(245,158,11,.1)'},low:{c:'#22c55e',bg:'rgba(34,197,94,.1)'}};
+const DL={structure:'Estrutura',code_quality:'Qualidade',security:'Segurança',tests:'Testes',documentation:'Documentação',performance:'Performance'};
+
+let tok={v:sessionStorage.getItem('fs_tok')||'',valid:false,info:null};
+if(tok.v)document.getElementById('tok-in').value=tok.v;
+
+const ICONS={
+  error:'<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg>',
+  success:'<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 4L6 11 3 8"/></svg>',
+  info:'<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 7v4M8 5v.5"/></svg>',
+};
+
+function show(id){['s-auth','s-load','s-report'].forEach(s=>document.getElementById(s).classList.remove('on'));document.getElementById(id).classList.add('on');}
+function showMsg(id,type,text,sub=''){document.getElementById(id).innerHTML=`<div class="msg-box ${type}">${ICONS[type]||''}<div>${text}${sub?`<span class="msg-action">${sub}</span>`:''}</div></div>`;}
+function clr(id){document.getElementById(id).innerHTML='';}
+function setBtn(id,html,dis=false){const b=document.getElementById(id);b.innerHTML=html;b.disabled=dis;}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function goTab(t){document.getElementById('pane-tok').style.display=t==='tok'?'block':'none';document.getElementById('pane-rep').style.display=t==='rep'?'block':'none';document.getElementById('tab-tok').classList.toggle('active',t==='tok');document.getElementById('tab-rep').classList.toggle('active',t==='rep');}
+
+let eyeOpen=false;
+function toggleEye(){eyeOpen=!eyeOpen;document.getElementById('tok-in').type=eyeOpen?'text':'password';document.getElementById('eye-ic').innerHTML=eyeOpen?'<path d="M2 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><path d="M3 3l10 10" stroke-linecap="round"/>':'<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/>';}
+
+function showTokCard(info){
+  const sc=(info.scopes||[]).slice(0,4).map(s=>`<span class="tok-scope">${s}</span>`).join('');
+  document.getElementById('tok-card-wrap').style.display='block';
+  document.getElementById('tok-card-wrap').innerHTML=`<div class="tok-card"><div class="tok-av"><img src="${info.avatar_url}" onerror="this.style.display='none'"/></div><div style="flex:1;min-width:0"><div class="tok-login">@${info.login}${info.name?' — '+info.name:''}</div><div class="tok-meta">${sc}<span class="tok-rate">${info.rate_limit} req</span></div></div><button class="tok-clear" onclick="clearTok()">Trocar</button></div>`;
+  document.getElementById('tok-field').style.display='none';
+  document.getElementById('eye-btn').style.display='none';
+}
+
+function clearTok(){
+  sessionStorage.removeItem('fs_tok');tok={v:'',valid:false,info:null};
+  document.getElementById('tok-in').value='';
+  document.getElementById('tok-card-wrap').style.display='none';document.getElementById('tok-card-wrap').innerHTML='';
+  document.getElementById('tok-field').style.display='block';document.getElementById('eye-btn').style.display='flex';
+  document.getElementById('scope-warn').style.display='none';
+  document.getElementById('tab-tok').classList.remove('done');document.getElementById('chk-tok').style.display='none';
+  clr('tok-msg');
+  setBtn('btn-val','<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2L6 9l-3-3"/></svg> Validar token');
+  goTab('tok');
+}
+
+async function doValidate(){
+  const t=document.getElementById('tok-in').value.trim();
+  if(!t){showMsg('tok-msg','error','Informe o token.');return;}
+  const ok=t.startsWith('ghp_')||t.startsWith('github_pat_')||t.startsWith('gho_')||t.startsWith('ghs_');
+  if(!ok){showMsg('tok-msg','error','Formato inválido. Token deve começar com <code style="font-family:monospace">ghp_</code> ou <code style="font-family:monospace">github_pat_</code>.','Gere um token em github.com/settings/tokens.');return;}
+  clr('tok-msg');document.getElementById('scope-warn').style.display='none';
+  setBtn('btn-val','<span class="spin">↻</span> Validando...',true);
+  try{
+    const r=await fetch(`${GH}/user`,{headers:{'Authorization':`Bearer ${t}`,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});
+    if(r.status===401){showMsg('tok-msg','error','Token inválido ou expirado.','Verifique se foi revogado em github.com/settings/tokens.');setBtn('btn-val','Validar token');return;}
+    if(r.status===403){const rem=r.headers.get('x-ratelimit-remaining');if(rem==='0'){const rs=r.headers.get('x-ratelimit-reset');const t2=rs?new Date(parseInt(rs)*1000).toLocaleTimeString('pt-BR'):'em breve';showMsg('tok-msg','error',`Rate limit. Reset às ${t2}.`);}else showMsg('tok-msg','error','Sem permissão.');setBtn('btn-val','Validar token');return;}
+    if(!r.ok){showMsg('tok-msg','error',`Erro ${r.status}.`);setBtn('btn-val','Validar token');return;}
+    const d=await r.json();
+    const scopes=(r.headers.get('x-oauth-scopes')||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const rl=parseInt(r.headers.get('x-ratelimit-remaining')||'0');
+    const hasRepo=scopes.includes('repo')||scopes.includes('public_repo');
+    const info={login:d.login,name:d.name,avatar_url:d.avatar_url,scopes,rate_limit:rl};
+    sessionStorage.setItem('fs_tok',t);tok={v:t,valid:true,info};
+    document.getElementById('tab-tok').classList.add('done');document.getElementById('chk-tok').style.display='inline-flex';
+    showTokCard(info);
+    if(!hasRepo)document.getElementById('scope-warn').style.display='flex';
+    showMsg('tok-msg','success',`Token válido. Olá, @${d.login}!`,'Informe o repositório que deseja analisar.');
+    setTimeout(()=>goTab('rep'),1300);
+  }catch(e){showMsg('tok-msg','error','Sem conexão com a GitHub API.','Verifique sua internet.');setBtn('btn-val','Validar token');}
+}
+
+function initProg(){document.getElementById('psteps').innerHTML=STEPS.map(s=>`<div class="pstep idle" id="${s.id}"><div class="pico">○</div><div><div class="ptitle">${s.title}</div><div class="pdesc">${s.desc}</div></div><span class="pchk">✓</span></div>`).join('');}
+function setStep(i,state){const el=document.getElementById(STEPS[i].id);if(!el)return;el.className=`pstep ${state}`;if(state==='active')el.querySelector('.pico').innerHTML='<span class="spin" style="font-size:9px">↻</span>';if(state==='done')el.querySelector('.pico').innerHTML='✓';if(state==='err')el.querySelector('.pico').innerHTML='✗';const pct=Math.round(((i+(state==='done'?1:.5))/STEPS.length)*100);document.getElementById('pbar-f').style.width=pct+'%';document.getElementById('pbar-lbl').textContent=pct+'% concluído';}
+
+async function ghFetch(path){
+  const r=await fetch(`${GH}${path}`,{headers:{'Authorization':`Bearer ${tok.v}`,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});
+  if(r.status===401)throw{type:'auth',msg:'Token expirou. Informe um novo token.'};
+  if(r.status===403){const rem=r.headers.get('x-ratelimit-remaining');if(rem==='0'){const rs=r.headers.get('x-ratelimit-reset');const t=rs?new Date(parseInt(rs)*1000).toLocaleTimeString('pt-BR'):'em breve';throw{type:'rate',msg:`Rate limit. Reset às ${t}.`};}throw{type:'forbidden',msg:'Sem permissão para este repositório.'};}
+  if(r.status===404)throw{type:'notfound',msg:'Repositório não encontrado. Verifique a URL.'};
+  if(!r.ok)throw{type:'api',msg:`Erro ${r.status} na GitHub API.`};
+  return r.json();
+}
+
+function parseUrl(url){const m=url.match(/github\.com\/([^/]+)\/([^/?.#]+)/);if(!m)throw new Error('URL inválida.');return[m[1],m[2].replace(/\.git$/,'')];}
+
+const AI_SYS=`Você é o Foresail, agente de análise de qualidade e risco de código. Analise o repositório e retorne SOMENTE JSON válido (sem markdown):
+{
+  "quality_score":<int 0-100>,
+  "risk_level":"<low|medium|high|critical>",
+  "summary":"<resumo executivo pt-BR 3-4 frases com probabilidade de risco>",
+  "language_detected":"<linguagem>",
+  "framework_detected":"<framework ou N/A>",
+  "dimensions":{"structure":<0-100>,"code_quality":<0-100>,"security":<0-100>,"tests":<0-100>,"documentation":<0-100>,"performance":<0-100>},
+  "good_practices":[{"title":"","description":"","file":""}],
+  "errors":[{"severity":"<critical|high|medium|low>","title":"","description":"","file":"","line_hint":""}],
+  "improvements":[{"priority":"<high|medium|low>","title":"","description":"","effort":"<low|medium|high>"}],
+  "failure_risks":[{"probability":<0-100>,"title":"","description":"","impact":"<critical|high|medium|low>"}],
+  "stacks":[{"name":"","color":"<hex>"}],
+  "metrics":{"files_analyzed":<int>,"estimated_loc":<int>,"has_tests":<bool>,"has_readme":<bool>,"has_env_exposure":<bool>,"complexity_estimate":"<low|medium|high>"}
+}`;
+
+async function callAI(snap){
+  const ft=snap.files.map(f=>`\n${'='.repeat(50)}\n📄 ${f.path}\n${'='.repeat(50)}\n${f.content}`).join('');
+  const um=`Repo: ${snap.repo}\nLinguagem: ${snap.language||'?'}\nArquivos: ${snap.files.length}\n${ft}\n\nGere o relatório.`;
+  const r=await fetch(OR_URL,{method:'POST',headers:{'Authorization':`Bearer ${OR_KEY}`,'Content-Type':'application/json','HTTP-Referer':'https://foresail.app','X-Title':'Foresail'},body:JSON.stringify({model:OR_MDL,messages:[{role:'system',content:AI_SYS},{role:'user',content:um}],max_tokens:4000,temperature:0.15,response_format:{type:'json_object'}})});
+  if(!r.ok){const e=await r.text();throw new Error(`OpenRouter ${r.status}: ${e.slice(0,150)}`);}
+  const d=await r.json();const raw=d.choices[0].message.content;
+  try{return JSON.parse(raw);}catch{const m=raw.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error('JSON inválido da IA');}
+}
+
+async function doAnalyze(){
+  if(!tok.valid){showMsg('rep-msg','error','Valide seu token antes de analisar.','← Aba Token');return;}
+  const url=document.getElementById('rep-in').value.trim();
+  if(!url||!url.includes('github.com')){showMsg('rep-msg','error','Informe uma URL válida do GitHub.');return;}
+  let owner,repo;
+  try{[owner,repo]=parseUrl(url);}catch(e){showMsg('rep-msg','error',e.message);return;}
+  clr('rep-msg');show('s-load');
+  document.getElementById('load-repo').textContent=`${owner}/${repo}`;
+  initProg();
+  const snap={repo:`${owner}/${repo}`,language:null,files:[]};
+  try{
+    setStep(0,'active');await ghFetch('/user');setStep(0,'done');
+    setStep(1,'active');
+    const meta=await ghFetch(`/repos/${owner}/${repo}`);
+    Object.assign(snap,{language:meta.language,description:meta.description,is_private:meta.private||false,stars:meta.stargazers_count||0,default_branch:meta.default_branch||'main'});
+    setStep(1,'done');
+    setStep(2,'active');
+    const treeData=await ghFetch(`/repos/${owner}/${repo}/git/trees/${meta.default_branch}?recursive=1`);
+    const filtered=(treeData.tree||[]).filter(item=>{
+      if(item.type!=='blob')return false;
+      const parts=item.path.split('/');
+      if(parts.slice(0,-1).some(p=>SKIP.has(p)))return false;
+      if((item.size||0)>120000)return false;
+      const fname=parts[parts.length-1].toLowerCase();
+      const ext=fname.includes('.')?'.'+fname.split('.').pop():'';
+      return EXTS.has(ext)||['dockerfile','makefile','procfile'].includes(fname);
+    }).slice(0,35);
+    snap.total_files=filtered.length;
+    setStep(2,'done');
+    setStep(3,'active');
+    for(let i=0;i<filtered.length;i+=5){
+      const batch=filtered.slice(i,i+5);
+      const res=await Promise.all(batch.map(async f=>{
+        try{const d=await ghFetch(`/repos/${owner}/${repo}/contents/${f.path}`);if(d.encoding==='base64'&&d.content){const c=atob(d.content.replace(/\n/g,''));return{path:f.path,content:c.length>3500?c.slice(0,3500)+'\n// [TRUNCADO]':c};}
+        }catch(e2){if(e2.type==='auth')throw e2;}return null;
+      }));
+      snap.files.push(...res.filter(Boolean));
+    }
+    setStep(3,'done');
+    setStep(4,'active');
+    const ai=await callAI(snap);
+    setStep(4,'done');
+    document.getElementById('pbar-f').style.width='100%';
+    document.getElementById('pbar-lbl').textContent='100% — análise concluída';
+    await delay(400);
+    const report={...ai,repo_name:`${owner}/${repo}`,repo_url:url,analyzed_at:new Date().toISOString(),files_in_repo:snap.total_files,files_analyzed:snap.files.length,files_list:snap.files.map(f=>f.path),is_private:snap.is_private,stars:snap.stars,description:snap.description};
+
+    // ── Persist this analysis as a "project" in the backend so that it
+    //    appears in the Pro dashboard / Projects list for the demo user.
+    try {
+      const apiBase = (window.VITE_API_URL || '/api/v1');
+      await fetch(`${apiBase}/projects`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          name: report.repo_name,
+          github_repo: report.repo_name,
+          description: report.description || undefined,
+        }),
+      });
+    } catch(e) {
+      console.warn('Falha ao registrar projeto no backend:', e);
+    }
+
+    renderReport(report);show('s-report');
+  }catch(e){
+    const errMsg=e.msg||e.message||'Erro inesperado.';
+    show('s-auth');goTab('rep');
+    showMsg('rep-msg','error',errMsg,e.type==='auth'?'Volte à aba Token.':'Tente novamente.');
+    if(e.type==='auth')clearTok();
+  }
+}
+
+function renderReport(d){
+  document.getElementById('rep-ts').textContent=new Date(d.analyzed_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  const body=document.getElementById('rep-body');body.innerHTML='';
+  const rc=RC[d.risk_level]||RC.medium;
+  const sc=d.quality_score>=70?'#22c55e':d.quality_score>=50?'#f59e0b':'#ef4444';
+  const circ=301.6;const offset=circ-(d.quality_score/100)*circ;
+  const m=d.metrics||{};const errs=d.errors||[];const crit=errs.filter(e=>e.severity==='critical').length;
+
+  // 1. Hero
+  body.insertAdjacentHTML('beforeend',`
+  <div class="slabel">Repositório analisado</div>
+  <div class="hero-row">
+    <div class="score-ring-wrap">
+      <svg viewBox="0 0 110 110" fill="none">
+        <circle cx="55" cy="55" r="48" stroke="rgba(255,255,255,.06)" stroke-width="7"/>
+        <circle cx="55" cy="55" r="48" stroke="${sc}" stroke-width="7"
+          stroke-dasharray="${circ}" stroke-dashoffset="${offset.toFixed(1)}"
+          stroke-linecap="round" transform="rotate(-90 55 55)"
+          style="transition:stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1)"/>
+      </svg>
+      <div class="score-center">
+        <span class="score-n" style="color:${sc}" id="sctr">0</span>
+        <span class="score-l">SCORE</span>
+      </div>
+    </div>
+    <div style="flex:1">
+      <div class="risk-pill" style="background:${rc.bg};color:${rc.c}">${rc.l}</div>
+      <div class="repo-nm">${d.repo_name}</div>
+      <p class="summary-txt">${d.summary}</p>
+      <div class="hero-chips">
+        <div class="hchip">Linguagem: <span>${d.language_detected||'—'}</span></div>
+        <div class="hchip">Framework: <span>${d.framework_detected||'—'}</span></div>
+        <div class="hchip">Arquivos: <span>${d.files_analyzed}/${d.files_in_repo}</span></div>
+        <div class="hchip">LOC: <span>~${((m.estimated_loc||0)).toLocaleString()}</span></div>
+        <div class="hchip">Testes: <span>${m.has_tests?'Sim':'Não'}</span></div>
+        <div class="hchip">README: <span>${m.has_readme?'Sim':'Não'}</span></div>
+        <div class="hchip">Complexidade: <span>${m.complexity_estimate||'—'}</span></div>
+        ${m.has_env_exposure?'<div class="hchip" style="border-color:rgba(239,68,68,.3)">Secrets expostos: <span style="color:var(--red)">⚠ Sim</span></div>':''}
+      </div>
+    </div>
+  </div>`);
+  setTimeout(()=>{let c=0;const t=d.quality_score;const iv=setInterval(()=>{c=Math.min(c+Math.ceil(t/36),t);document.getElementById('sctr').textContent=c;if(c>=t)clearInterval(iv);},28);},200);
+
+  // 2. Dimensões
+  const dims=d.dimensions||{};
+  body.insertAdjacentHTML('beforeend',`<div class="slabel">Dimensões de qualidade</div><div class="dim6" id="d6"></div>`);
+  const d6=document.getElementById('d6');
+  Object.entries(dims).forEach(([k,v])=>{const c=v>=70?'#22c55e':v>=50?'#f59e0b':'#ef4444';d6.insertAdjacentHTML('beforeend',`<div class="dbar"><div class="dbar-top"><span class="dbar-name">${DL[k]||k}</span><span class="dbar-val" style="color:${c}">${v}</span></div><div class="dbar-track"><div class="dbar-fill" style="width:0%;background:${c}" data-w="${v}%"></div></div></div>`);});
+  setTimeout(()=>document.querySelectorAll('.dbar-fill').forEach(e=>e.style.width=e.dataset.w),350);
+
+  // 3. Stats
+  body.insertAdjacentHTML('beforeend',`
+  <div class="slabel">Métricas gerais</div>
+  <div class="stat4">
+    <div class="scard"><div class="scard-ico">⚠</div><div class="scard-val" style="color:${errs.length>3?'#ef4444':'#f59e0b'}">${errs.length}</div><div class="scard-lbl">Problemas</div></div>
+    <div class="scard"><div class="scard-ico">✗</div><div class="scard-val" style="color:${crit>0?'#ef4444':'#22c55e'}">${crit}</div><div class="scard-lbl">Críticos</div></div>
+    <div class="scard"><div class="scard-ico">✓</div><div class="scard-val" style="color:#22c55e">${(d.good_practices||[]).length}</div><div class="scard-lbl">Boas práticas</div></div>
+    <div class="scard"><div class="scard-ico">⟳</div><div class="scard-val" style="color:#f59e0b">${(d.failure_risks||[]).length}</div><div class="scard-lbl">Riscos</div></div>
+  </div>`);
+
+  // 4. Charts
+  body.insertAdjacentHTML('beforeend',`
+  <div class="slabel">Análise visual</div>
+  <div class="chart3">
+    <div class="chart-card"><div class="chart-title">Dimensões de qualidade</div><div class="chart-h"><canvas id="c-radar"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Severidade dos problemas</div><div class="chart-h"><canvas id="c-donut"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Visão geral</div><div class="chart-h"><canvas id="c-bar"></canvas></div></div>
+  </div>`);
+  requestAnimationFrame(()=>{
+    Chart.defaults.color='#64748b';Chart.defaults.font.family="'Geist',sans-serif";
+    const grid={color:'rgba(255,255,255,.05)'};
+    new Chart(document.getElementById('c-radar'),{type:'radar',data:{labels:Object.values(DL),datasets:[{data:Object.values(dims),backgroundColor:'rgba(59,130,246,.12)',borderColor:'#3b82f6',pointBackgroundColor:'#3b82f6',pointRadius:3,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{stepSize:25,backdropColor:'transparent',font:{size:9}},grid:{color:'rgba(255,255,255,.05)'},pointLabels:{font:{size:9},color:'#64748b'},angleLines:{color:'rgba(255,255,255,.05)'}}},plugins:{legend:{display:false}}}});
+    const sc2={critical:0,high:0,medium:0,low:0};errs.forEach(e=>{if(sc2[e.severity]!=null)sc2[e.severity]++;});
+    new Chart(document.getElementById('c-donut'),{type:'doughnut',data:{labels:['Crítico','Alto','Médio','Baixo'],datasets:[{data:Object.values(sc2),backgroundColor:['#ef4444','#f97316','#f59e0b','#22c55e'],borderColor:'transparent',hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'63%',plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:10,font:{size:10}}}}}});
+    new Chart(document.getElementById('c-bar'),{type:'bar',data:{labels:['Boas práticas','Melhorias','Erros','Riscos'],datasets:[{data:[(d.good_practices||[]).length,(d.improvements||[]).length,errs.length,(d.failure_risks||[]).length],backgroundColor:['#22c55e','#3b82f6','#ef4444','#f59e0b'],borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{grid},y:{grid,ticks:{stepSize:1,font:{size:10}}}},plugins:{legend:{display:false}}}});
+  });
+
+  // 5. Erros + Boas práticas
+  body.insertAdjacentHTML('beforeend',`
+  <div class="slabel">Problemas identificados & boas práticas</div>
+  <div class="two-col">
+    <div class="list-card">
+      <div class="list-head">Erros encontrados <span class="cnt-pill">${errs.length}</span></div>
+      ${errs.map(e=>{const s=SEV[e.severity]||SEV.medium;return`<div class="li"><div class="li-dot" style="background:${s.c}"></div><div><div class="li-title">${e.title}</div><div class="li-desc">${e.description}</div><div class="li-meta">${e.file||''}${e.line_hint?' · '+e.line_hint:''}</div><span class="sev-pill" style="background:${s.bg};color:${s.c}">${s.l}</span></div></div>`;}).join('')||'<div style="color:var(--fg2);font-size:12px">Nenhum erro encontrado.</div>'}
+    </div>
+    <div class="list-card">
+      <div class="list-head">Boas práticas <span class="cnt-pill">${(d.good_practices||[]).length}</span></div>
+      ${(d.good_practices||[]).map(g=>`<div class="li"><div class="gp-ic"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#22c55e" stroke-width="1.4" stroke-linecap="round"/></svg></div><div><div class="li-title">${g.title}</div><div class="li-desc">${g.description}</div><div class="li-meta">${g.file||''}</div></div></div>`).join('')}
+    </div>
+  </div>`);
+
+  // 6. Melhorias
+  body.insertAdjacentHTML('beforeend',`
+  <div class="slabel">Sugestões de melhoria</div>
+  <div class="imp-list">
+    ${(d.improvements||[]).map(i=>{const p=PRI[i.priority]||PRI.medium;const eff=i.effort==='low'?'Esforço baixo':i.effort==='high'?'Esforço alto':'Esforço médio';return`<div class="imp-item"><span class="pri-tag" style="background:${p.bg};color:${p.c}">${(i.priority||'').toUpperCase()}</span><div><div class="li-title">${i.title}</div><div class="li-desc">${i.description}</div><span class="eff-tag">${eff}</span></div></div>`;}).join('')}
+  </div>`);
+
+  // 7. Riscos
+  body.insertAdjacentHTML('beforeend',`
+  <div class="slabel">Riscos de falha</div>
+  <div class="risk4">
+    ${(d.failure_risks||[]).map(r=>{const c=r.probability>=70?'#ef4444':r.probability>=40?'#f97316':'#f59e0b';const imp=SEV[r.impact]||SEV.medium;return`<div class="risk-c"><div class="risk-top"><span class="risk-t">${r.title}</span><span class="risk-pct" style="color:${c}">${r.probability}%</span></div><div class="risk-bar"><div class="risk-fill" style="width:${r.probability}%;background:${c}"></div></div><div class="risk-d">${r.description}</div><span class="impact-tag" style="background:${imp.bg};color:${imp.c}">Impacto: ${imp.l}</span></div>`;}).join('')}
+  </div>`);
+
+  // 8. Stacks
+  if((d.stacks||[]).length){body.insertAdjacentHTML('beforeend',`<div class="slabel">Tecnologias detectadas</div><div class="stack-row">${d.stacks.map(s=>`<div class="st-chip"><div class="st-dot" style="background:${s.color||'#3b82f6'}"></div>${s.name}</div>`).join('')}</div>`);}
+
+  // 9. Arquivos
+  const fl=d.files_list||[];
+  if(fl.length){body.insertAdjacentHTML('beforeend',`<div class="slabel">Arquivos analisados <span class="cnt-pill">${fl.length}</span></div><div class="file-list-card"><div class="file-grid">${fl.map(f=>`<div class="file-item"><div class="fdot"></div>${f}</div>`).join('')}</div></div>`);}
+
+  // 10. JSON
+  body.insertAdjacentHTML('beforeend',`
+  <div class="slabel">Exportar dados brutos</div>
+  <div class="json-wrap">
+    <div class="json-toolbar"><span style="font-size:11px;color:var(--fg2)">JSON completo da análise</span><button class="btn-copy" id="btn-cj">Copiar JSON</button></div>
+    <pre>${JSON.stringify(d,null,2)}</pre>
+  </div>`);
+  document.getElementById('btn-cj').addEventListener('click',()=>{navigator.clipboard.writeText(JSON.stringify(d,null,2));const b=document.getElementById('btn-cj');b.textContent='Copiado!';setTimeout(()=>b.textContent='Copiar JSON',1500);});
+}
+
+function goBack(){show('s-auth');goTab('rep');clr('rep-msg');}
+
+document.getElementById('tok-in').addEventListener('keydown',e=>{if(e.key==='Enter')doValidate();});
+document.getElementById('rep-in').addEventListener('keydown',e=>{if(e.key==='Enter')doAnalyze();});
+if(tok.v)showMsg('tok-msg','info','Token recuperado da sessão.','Clique em "Validar token" para confirmar.');
+</script>
+</body>
+</html>

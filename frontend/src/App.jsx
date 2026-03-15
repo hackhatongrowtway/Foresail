@@ -7,14 +7,14 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import { useTheme } from './hooks/useTheme';
 import AnimatedBackground from './components/AnimatedBackground/AnimatedBackground';
-import PageTransition     from './components/PageTransition/PageTransition';
-import LoginPage          from './pages/Login/LoginPage';
-import RegisterPage       from './pages/Register/RegisterPage';
-import ProDashboard   from './pages/ProDashboard/ProDashboard';
-import ProjectsPage   from './pages/ProjectsPage/ProjectsPage';
-import ProjectDetail  from './pages/ProjectDetail/ProjectDetail';
-import Integrations   from './pages/Integrations/Integrations';
-import Settings       from './pages/Settings/Settings';
+import PageTransition from './components/PageTransition/PageTransition';
+import LoginPage from './pages/Login/LoginPage';
+import RegisterPage from './pages/Register/RegisterPage';
+import ProDashboard from './pages/ProDashboard/ProDashboard';
+import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
+import ProjectDetail from './pages/ProjectDetail/ProjectDetail';
+import Integrations from './pages/Integrations/Integrations';
+import Settings from './pages/Settings/Settings';
 import IngestionPanel from './pages/IngestionPanel/IngestionPanel';
 import './styles/tokens.css';
 import './styles/global.css';
@@ -23,24 +23,24 @@ import './styles/layout.css';
 
 
 const AUTH_PAGES = {
-  login:    { component: LoginPage,    direction: 'back'    },
+  login: { component: LoginPage, direction: 'back' },
   register: { component: RegisterPage, direction: 'forward' },
 };
 
 const APP_PAGES = {
-  dashboard:        ProDashboard,
-  projects:         ProjectsPage,
+  dashboard: ProDashboard,
+  projects: ProjectsPage,
   'project-detail': ProjectDetail,
-  integrations:     Integrations,
-  settings:         Settings,
-  ingestion:        IngestionPanel,
+  integrations: Integrations,
+  settings: Settings,
+  ingestion: IngestionPanel,
 };
 
 function App() {
   const { theme, toggleTheme } = useTheme();
-  const [user,     setUser]     = useState(null);
-  const [page,     setPage]     = useState('login');
-  const [direction,setDirection]= useState('forward');
+  const [user, setUser] = useState(null);
+  const [page, setPage] = useState('login');
+  const [direction, setDirection] = useState('forward');
   const [pageData, setPageData] = useState(null);
 
   const navigate = useCallback((target, data = null) => {
@@ -59,18 +59,18 @@ function App() {
     // Escuta mudanças de logado/deslogado e refresh de token
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const isNowLoggedIn = !!session?.user;
-      
+
       setUser(session?.user ?? null);
-      
+
       setPage(currentPage => {
         // Se deslogou, volta pro login
         if (!isNowLoggedIn) return 'login';
-        
+
         // Se acabou de logar e tava nas telas de login/register, manda pro dashboard
         if (isNowLoggedIn && (currentPage === 'login' || currentPage === 'register')) {
           return 'dashboard';
         }
-        
+
         // Caso contrário, mantém onde o cara já está navegando
         return currentPage;
       });
