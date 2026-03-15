@@ -50,17 +50,36 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Busca a sessão assim que o App monta
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) setPage('dashboard');
+    // Normaliza o objeto user do Supabase para sempre ter um campo `name`
+    function normalizeUser(supabaseUser) {
+      if (!supabaseUser) return null;
+      const meta = supabaseUser.user_metadata ?? {};
+      return {
+        ...supabaseUser,
+        name: meta.full_name ?? meta.name ?? supabaseUser.email ?? 'Usuário',
+      };
+    }
+
+    // Busca a sessão e valida no servidor se o usuário ainda existe
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user) return;
+
+      // getUser() faz chamada real ao Supabase — detecta usuário deletado
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        await supabase.auth.signOut();
+        return;
+      }
+
+      setUser(normalizeUser(user));
+      setPage('dashboard');
     });
 
     // Escuta mudanças de logado/deslogado e refresh de token
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const isNowLoggedIn = !!session?.user;
 
-      setUser(session?.user ?? null);
+      setUser(normalizeUser(session?.user));
 
       setPage(currentPage => {
         // Se deslogou, volta pro login

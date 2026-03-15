@@ -223,10 +223,37 @@ function ProjectsPage({ user, theme, onToggleTheme, onNavigate, onLogout }) {
 
           {/* ── KPI Stats ── */}
           <div className="projects-stats-row">
-            <StatCard label="Total Projetos" value={loading ? '—' : stats.total} delta="+1 este mês" deltaDir="neutral" loading={loading} />
-            <StatCard label="Críticos" value={loading ? '—' : stats.critical} delta="+1 vs semana" deltaDir="negative" loading={loading} color="critical" />
-            <StatCard label="Em Risco" value={loading ? '—' : stats.atRisk} delta="-1 vs semana" deltaDir="positive" loading={loading} color="warning" />
-            <StatCard label="Saudáveis" value={loading ? '—' : stats.healthy} delta="+2 vs semana" deltaDir="positive" loading={loading} color="healthy" />
+            <StatCard
+              label="Total Projetos"
+              value={loading ? '—' : stats.total}
+              delta={loading ? null : stats.total === 0 ? 'nenhum projeto' : `${stats.total} monitorado${stats.total !== 1 ? 's' : ''}`}
+              deltaDir="neutral"
+              loading={loading}
+            />
+            <StatCard
+              label="Críticos"
+              value={loading ? '—' : stats.critical}
+              delta={loading ? null : stats.critical === 0 ? 'nenhum crítico' : 'requer atenção'}
+              deltaDir={loading ? 'neutral' : stats.critical > 0 ? 'negative' : 'positive'}
+              loading={loading}
+              color="critical"
+            />
+            <StatCard
+              label="Em Risco"
+              value={loading ? '—' : stats.atRisk}
+              delta={loading ? null : stats.atRisk === 0 ? 'nenhum em risco' : 'monitorar de perto'}
+              deltaDir={loading ? 'neutral' : stats.atRisk > 0 ? 'negative' : 'positive'}
+              loading={loading}
+              color="warning"
+            />
+            <StatCard
+              label="Saudáveis"
+              value={loading ? '—' : stats.healthy}
+              delta={loading ? null : stats.healthy === 0 ? 'nenhum saudável' : `${Math.round(stats.total ? stats.healthy / stats.total * 100 : 0)}% do total`}
+              deltaDir={loading ? 'neutral' : stats.healthy > 0 ? 'positive' : 'neutral'}
+              loading={loading}
+              color="healthy"
+            />
           </div>
 
           {/* ── Table card ── */}

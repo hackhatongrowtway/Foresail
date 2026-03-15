@@ -109,7 +109,7 @@
 .topbar__user-avatar {
   width: 24px;
   height: 24px;
-  background: var(--color-brand-primary);
+  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-secondary) 100%);
   color: #fff;
   border-radius: var(--radius-full);
   display: flex;

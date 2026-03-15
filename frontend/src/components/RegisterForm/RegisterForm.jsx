@@ -33,9 +33,25 @@ function PasswordStrength({ score }) {
 }
 
 function RegisterForm() {
-  const { fields, errors, apiError, loading, success, change, submit, strengthScore } = useRegisterForm();
+  const { fields, errors, apiError, loading, success, needsConfirmation, change, submit, strengthScore } = useRegisterForm();
   const [showPw, setShowPw]       = useState(false);
   const [showConf, setShowConf]   = useState(false);
+
+  if (success && needsConfirmation) {
+    return (
+      <div className="rf__success">
+        <div className="rf__success-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 4h16v16H4z" rx="2"/><polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <p className="rf__success-title">Verifique seu email</p>
+        <p className="rf__success-sub">
+          Enviamos um link de confirmação para <strong>{fields.email}</strong>. Clique no link para ativar sua conta.
+        </p>
+      </div>
+    );
+  }
 
   if (success) {
     return (

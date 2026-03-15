@@ -20,7 +20,18 @@ const signUpUser = async ({ name, email, password }) => {
   if (error) {
     throw new Error(error.message);
   }
-  return { ok: true, user: data.user };
+
+  // Supabase retorna sucesso mas identities vazia quando o email já existia
+  // (comportamento de segurança para não revelar se email está em uso)
+  if (!data.user || data.user.identities?.length === 0) {
+    throw new Error('Este email já está cadastrado. Tente fazer login.');
+  }
+
+  // data.session === null significa que o Supabase exige confirmação de email
+  // antes de ativar a conta
+  const needsConfirmation = !data.session;
+
+  return { ok: true, user: data.user, needsConfirmation };
 };
 
 export function useRegisterForm() {
@@ -29,6 +40,7 @@ export function useRegisterForm() {
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const change = (field) => (event) => {
     setFields((previous) => ({ ...previous, [field]: event.target.value }));
@@ -71,7 +83,8 @@ export function useRegisterForm() {
     setApiError('');
 
     try {
-      await signUpUser(fields);
+      const result = await signUpUser(fields);
+      setNeedsConfirmation(result.needsConfirmation);
       setSuccess(true);
     } catch (error) {
       // Traduz erros comuns do Supabase para pt-br
@@ -84,5 +97,5 @@ export function useRegisterForm() {
     }
   };
 
-  return { fields, errors, apiError, loading, success, change, submit, strengthScore };
+  return { fields, errors, apiError, loading, success, needsConfirmation, change, submit, strengthScore };
 }
