@@ -1,0 +1,115 @@
+/* components/AuthCard/AuthCard.css */
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 40px 36px 36px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  animation: cardIn .45s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Animated shimmer line at the top */
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #1B4DFF, #00E5A0, transparent);
+  opacity: 0.5;
+  animation: topShimmer 4s ease-in-out infinite;
+}
+
+@keyframes topShimmer {
+  0%,100% { opacity:.3; left:10%; right:10%; }
+  50%      { opacity:.7; left:5%; right:5%; }
+}
+
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(20px) scale(.98); filter:blur(4px); }
+  to   { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+}
+
+/* Brand */
+.auth-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.brand-mark {
+  animation: brandPulse 3s ease-in-out infinite;
+}
+
+@keyframes brandPulse {
+  0%,100% { filter: drop-shadow(0 0 0px transparent); }
+  50%      { filter: drop-shadow(0 0 6px rgba(0,229,160,0.5)); }
+}
+
+.auth-card__brand-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.04em;
+}
+
+/* Header */
+.auth-card__header { margin-bottom: 24px; }
+
+.auth-card__title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.03em;
+  margin-bottom: 4px;
+}
+
+.auth-card__sub {
+  font-size: 13.5px;
+  color: var(--text2);
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.auth-divider__line { flex:1; height:1px; background:var(--border); }
+
+.auth-divider__text {
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Footer */
+.auth-card__foot {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.auth-card__foot button {
+  background: none; border: none; padding: 0;
+  color: var(--accent); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: opacity .15s;
+  font-family: var(--font-body);
+}
+
+.auth-card__foot button:hover { opacity: .7; }
+
+@media (max-width: 440px) {
+  .auth-card { padding: 32px 22px 28px; border-radius: 18px; }
+}

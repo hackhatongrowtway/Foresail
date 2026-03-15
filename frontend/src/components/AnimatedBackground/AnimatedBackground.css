@@ -1,0 +1,99 @@
+/* components/AnimatedBackground/AnimatedBackground.css */
+
+.anim-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.anim-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Glowing orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(85px);
+  will-change: transform;
+}
+
+.orb-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(27,77,255,0.22) 0%, transparent 70%);
+  top: -200px; right: -150px;
+  animation: orbFloat1 18s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 450px; height: 450px;
+  background: radial-gradient(circle, rgba(0,229,160,0.16) 0%, transparent 70%);
+  bottom: -150px; left: -100px;
+  animation: orbFloat2 22s ease-in-out infinite;
+}
+
+.orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(27,77,255,0.1) 0%, transparent 70%);
+  top: 40%; left: 30%;
+  animation: orbFloat3 28s ease-in-out infinite;
+}
+
+[data-theme='light'] .orb-1 { background: radial-gradient(circle, rgba(27,77,255,0.1) 0%, transparent 70%); }
+[data-theme='light'] .orb-2 { background: radial-gradient(circle, rgba(0,229,160,0.08) 0%, transparent 70%); }
+[data-theme='light'] .orb-3 { background: radial-gradient(circle, rgba(27,77,255,0.06) 0%, transparent 70%); }
+
+@keyframes orbFloat1 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(-60px,40px) scale(1.08); }
+  66%      { transform: translate(40px,-30px) scale(0.95); }
+}
+
+@keyframes orbFloat2 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  40%      { transform: translate(70px,-50px) scale(1.12); }
+  70%      { transform: translate(-40px,30px) scale(0.92); }
+}
+
+@keyframes orbFloat3 {
+  0%,100% { transform: translate(0,0) scale(1); opacity: 0.6; }
+  50%      { transform: translate(-80px,60px) scale(1.2); opacity: 1; }
+}
+
+/* Moving grid */
+.grid-overlay {
+  position: absolute;
+  inset: -50%;
+  background-image:
+    linear-gradient(rgba(27,77,255,1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27,77,255,1) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.025;
+  animation: gridDrift 25s linear infinite;
+}
+
+[data-theme='light'] .grid-overlay { opacity: 0.04; }
+
+@keyframes gridDrift {
+  from { transform: translate(0,0); }
+  to   { transform: translate(60px,60px); }
+}
+
+/* Geo shapes layer */
+.geos-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.geo-shape {
+  position: absolute;
+  opacity: 0;
+  animation: geoAppear 1s ease forwards;
+}
+
+@keyframes geoAppear { to { opacity: 1; } }

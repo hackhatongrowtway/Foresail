@@ -1,0 +1,21 @@
+/* components/PageTransition/PageTransition.css */
+
+.page-transition { width: 100%; }
+
+.pt-enter {
+  animation: ptEnter .45s cubic-bezier(0, .8, .2, 1) both;
+}
+
+.pt-enter-back {
+  animation: ptEnterBack .45s cubic-bezier(0, .8, .2, 1) both;
+}
+
+@keyframes ptEnter {
+  from { opacity: 0; transform: translateX(40px) scale(0.97); filter: blur(4px); }
+  to   { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+}
+
+@keyframes ptEnterBack {
+  from { opacity: 0; transform: translateX(-40px) scale(0.97); filter: blur(4px); }
+  to   { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+}
