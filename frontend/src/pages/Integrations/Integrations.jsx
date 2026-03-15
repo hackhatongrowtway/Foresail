@@ -2,23 +2,13 @@
  * pages/Integrations/Integrations.jsx
  * S1-03 — Painel de conexões GitHub e Jira com status, teste e revogação.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Topbar  from '../../components/Topbar/Topbar';
 import './Integrations.css';
 
-const MOCK_INTEGRATIONS = [
-  {
-    id: 'gh-1', type: 'github', label: 'GitHub',
-    account: 'acme-corp', status: 'active',
-    connectedAt: '10/03/2025', repos: 12,
-  },
-  {
-    id: 'jr-1', type: 'jira', label: 'Jira',
-    account: 'cloud.acme.atlassian.net', status: 'active',
-    connectedAt: '10/03/2025', projects: 7,
-  },
-];
+const API_BASE = 'http://localhost:8000/api/v1'; // Ajuste conforme seu backend
+
 
 const GitHubLogo = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -173,9 +163,45 @@ function JiraForm({ onConnect }) {
 }
 
 function Integrations({ user, theme, onToggleTheme, onNavigate, onLogout }) {
-  const [integrations, setIntegrations] = useState(MOCK_INTEGRATIONS);
+  const [integrations, setIntegrations] = useState([]);
   const [showJiraForm, setShowJiraForm] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Exemplo de "hardcoded" project ID. Num fluxo real, você selecionaria o projeto ativo.
+  const ACTIVE_PROJECT_ID = '00000000-0000-0000-0000-000000000001'; 
+
+  useEffect(() => {
+    // Busca as integrações salvas no Postgres
+    const loadIntegrations = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/jira/?project_id=${ACTIVE_PROJECT_ID}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Segurando possível erro no parse da URL
+          const mapped = data.map(item => {
+            let hostname = item.jira_url;
+            try { 
+              hostname = new URL(item.jira_url).hostname; 
+            } catch (e) { /* keep original if invalid */ }
+
+            return {
+              id: item.id,
+              type: 'jira',
+              label: 'Jira (' + item.jira_key + ')',
+              account: hostname,
+              status: item.auth_type ? 'active' : 'error',
+              connectedAt: new Date(item.created_at).toLocaleDateString('pt-BR'),
+              projects: '—', 
+            };
+          });
+          setIntegrations(mapped);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar integrações:', err);
+      }
+    };
+    loadIntegrations();
+  }, []);
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
@@ -192,15 +218,34 @@ function Integrations({ user, theme, onToggleTheme, onNavigate, onLogout }) {
     // TODO: window.location.href = '/api/v1/auth/github'
   }
 
-  function handleJiraConnect({ url, email }) {
-    const newInt = {
-      id: 'jr-' + Date.now(), type: 'jira', label: 'Jira',
-      account: new URL(url).hostname, status: 'active',
-      connectedAt: new Date().toLocaleDateString('pt-BR'), projects: 0,
-    };
-    setIntegrations(prev => [...prev, newInt]);
-    setShowJiraForm(false);
-    showToast('Jira conectado com sucesso!');
+  async function handleJiraConnect({ url, email }) {
+    try {
+      // Aqui salvamos no BD de fato:
+      const res = await fetch(`${API_BASE}/jira/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: ACTIVE_PROJECT_ID,
+          jira_key: 'MAIN', // Chave genérica para o MVP
+          jira_url: url,
+          jira_email: email,
+          jira_api_token: 'dummy-token-for-now' 
+        })
+      });
+
+      if (!res.ok) throw new Error('Falha na API');
+      
+      const newInt = {
+        id: 'jr-' + Date.now(), type: 'jira', label: 'Jira',
+        account: new URL(url).hostname, status: 'active',
+        connectedAt: new Date().toLocaleDateString('pt-BR'), projects: 0,
+      };
+      setIntegrations(prev => [...prev, newInt]);
+      setShowJiraForm(false);
+      showToast('Jira conectado com sucesso no backend!');
+    } catch (err) {
+      showToast('Erro ao salvar no banco: ' + err.message, 'error');
+    }
   }
 
   const hasGitHub = integrations.some(i => i.type === 'github');

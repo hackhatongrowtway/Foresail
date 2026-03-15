@@ -68,3 +68,47 @@ class RepositoryResponse(RepositoryBase, OrmBase):
     id: UUID
     project_id: UUID
     created_at: datetime
+
+
+# ==========================================
+# Ingestion Runs
+# ==========================================
+class IngestionRunResponse(OrmBase):
+    id: UUID
+    project_id: UUID
+    source: str
+    status: str
+    started_at: datetime
+    completed_at: Optional[datetime]
+    events_count: int
+    errors_count: int
+    error_logs: Optional[Any]
+
+
+# ==========================================
+# Tickets
+# ==========================================
+class TicketResponse(OrmBase):
+    id: UUID
+    project_id: UUID
+    source: str
+    external_id: str
+    title: str
+    status: str
+    author: Optional[str]
+    created_at_ext: Optional[datetime]
+    updated_at_ext: Optional[datetime]
+    metadata_json: Optional[Any]
+
+
+# ==========================================
+# Commits
+# ==========================================
+class CommitResponse(OrmBase):
+    id: UUID
+    project_id: UUID
+    repository_id: UUID
+    commit_hash: str
+    message: str
+    author: Optional[str]
+    date_ext: Optional[datetime]

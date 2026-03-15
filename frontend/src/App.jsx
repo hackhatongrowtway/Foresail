@@ -56,14 +56,24 @@ function App() {
       if (session?.user) setPage('dashboard');
     });
 
-    // Escuta mudanças de logado/deslogado
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Escuta mudanças de logado/deslogado e refresh de token
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const isNowLoggedIn = !!session?.user;
+      
       setUser(session?.user ?? null);
-      if (session?.user) {
-        setPage('dashboard');
-      } else {
-        setPage('login');
-      }
+      
+      setPage(currentPage => {
+        // Se deslogou, volta pro login
+        if (!isNowLoggedIn) return 'login';
+        
+        // Se acabou de logar e tava nas telas de login/register, manda pro dashboard
+        if (isNowLoggedIn && (currentPage === 'login' || currentPage === 'register')) {
+          return 'dashboard';
+        }
+        
+        // Caso contrário, mantém onde o cara já está navegando
+        return currentPage;
+      });
     });
 
     return () => subscription.unsubscribe();

@@ -64,3 +64,54 @@ class Repository(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     project = relationship("Project", back_populates="repositories")
+
+
+def _get_uuid():
+    return uuid.uuid4()
+
+class IngestionRun(Base):
+    __tablename__ = "ingestion_runs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_get_uuid)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    source = Column(String(50), nullable=False) # 'github' or 'jira'
+    status = Column(String(50), nullable=False, default="running") # 'running', 'success', 'error'
+    started_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    events_count = Column(Integer, default=0)
+    errors_count = Column(Integer, default=0)
+    error_logs = Column(JSONB, nullable=True) # [{"time": "...", "msg": "..."}]
+
+    project = relationship("Project")
+
+
+class Ticket(Base):
+    __tablename__ = "tickets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_get_uuid)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    source = Column(String(50), nullable=False) # 'jira' or 'github_pr'
+    external_id = Column(String(255), nullable=False, index=True) # e.g. "PROJ-123" or "PR#45"
+    title = Column(Text, nullable=False)
+    status = Column(String(100), nullable=False)
+    author = Column(String(255), nullable=True)
+    created_at_ext = Column(DateTime(timezone=True), nullable=True) # date created in external system
+    updated_at_ext = Column(DateTime(timezone=True), nullable=True)
+    metadata_json = Column(JSONB, nullable=True) # store points, labels, anything else
+
+    project = relationship("Project")
+
+
+class Commit(Base):
+    __tablename__ = "commits"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_get_uuid)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    commit_hash = Column(String(255), nullable=False, index=True)
+    message = Column(Text, nullable=False)
+    author = Column(String(255), nullable=True)
+    date_ext = Column(DateTime(timezone=True), nullable=True)
+
+    project = relationship("Project")
+    repository = relationship("Repository")

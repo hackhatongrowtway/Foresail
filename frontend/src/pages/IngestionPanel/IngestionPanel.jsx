@@ -2,19 +2,13 @@
  * pages/IngestionPanel/IngestionPanel.jsx
  * S2-05 — Painel de ingestão com logs, status e reprocessamento.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Topbar  from '../../components/Topbar/Topbar';
 import './IngestionPanel.css';
 
-const MOCK_RUNS = [
-  { id: 'r1', project: 'API Gateway — Produção',    source: 'all',    status: 'success', startedAt: '14/03 14:30', duration: '48s',  events: 1240, errors: 0  },
-  { id: 'r2', project: 'Auth Service — Produção',   source: 'github', status: 'success', startedAt: '14/03 11:15', duration: '31s',  events: 642,  errors: 0  },
-  { id: 'r3', project: 'Mobile App — Homologação',  source: 'jira',   status: 'error',   startedAt: '14/03 09:00', duration: '12s',  events: 0,    errors: 3  },
-  { id: 'r4', project: 'Payments Core — Dev',       source: 'all',    status: 'running', startedAt: '14/03 08:45', duration: '…',    events: 388,  errors: 0  },
-  { id: 'r5', project: 'Notification Service',      source: 'github', status: 'success', startedAt: '13/03 22:10', duration: '27s',  events: 201,  errors: 0  },
-  { id: 'r6', project: 'Analytics Pipeline — Dev',  source: 'all',    status: 'error',   startedAt: '13/03 20:55', duration: '8s',   events: 0,    errors: 1  },
-];
+const API_BASE = 'http://localhost:8000/api/v1'; // Ajuste conforme seu backend
+
 
 const MOCK_LOGS = {
   r3: [
@@ -59,13 +53,21 @@ function StatusBadge({ status }) {
 }
 
 function LogsPanel({ runId, onClose }) {
-  const logs = MOCK_LOGS[runId] || [];
   const [reprocessing, setReprocessing] = useState(false);
   const [done, setDone] = useState(false);
 
-  function handleReprocess() {
+  async function handleReprocess() {
     setReprocessing(true);
-    setTimeout(() => { setReprocessing(false); setDone(true); }, 2000);
+    try {
+      // POST para nova sync
+      // await fetch(`${API_BASE}/ingestions/sync/00000000-0000-0000-0000-000000000001`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' }
+      // });
+      setTimeout(() => { setReprocessing(false); setDone(true); }, 1500);
+    } catch(e) {
+      setReprocessing(false);
+    }
   }
 
   return (
@@ -108,10 +110,20 @@ function LogsPanel({ runId, onClose }) {
 }
 
 function IngestionPanel({ user, theme, onToggleTheme, onNavigate, onLogout }) {
-  const [runs, setRuns] = useState(MOCK_RUNS);
+  const [runs, setRuns] = useState([]); // Inicia vazio, carrega do banco
   const [activeLog, setActiveLog] = useState(null);
   const [sourceFilter, setSourceFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  useEffect(() => {
+    // Aqui nós buscamos do backend:
+    // const loadIngestions = async () => {
+    //   const response = await fetch(`${API_BASE}/ingestions`);
+    //   const data = await response.json();
+    //   setRuns(data);
+    // };
+    // loadIngestions();
+  }, []);
 
   const filtered = runs.filter(r => {
     if (sourceFilter !== 'all' && r.source !== sourceFilter) return false;

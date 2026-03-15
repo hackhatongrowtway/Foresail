@@ -10,8 +10,9 @@ from uuid import UUID
 
 from app.services.jira_service import JiraService
 from app.core.database import get_db
-from app.models.models import JiraProject
+from app.models.models import JiraProject, Project, Organization
 from app.schemas.schemas import JiraProjectCreate, JiraProjectResponse
+import traceback
 from app.core.crypto import encrypt_token, decrypt_token
 
 router = APIRouter()
@@ -59,6 +60,27 @@ async def map_jira_project(
 ):
     """Link a Jira project and its credentials to an internal ProjectPulse project."""
     try:
+        # MVP FIX: Verify if the requested project_id exists. If not, auto-create it (and an org)
+        # to prevent ForeignKey constraint failures when testing from the UI with the dummy ID.
+        project_exists = await db.execute(select(Project).where(Project.id == jira_data.project_id))
+        if not project_exists.scalar_one_or_none():
+            # Check for dummy org
+            dummy_org_id = UUID("00000000-0000-0000-0000-000000000000")
+            org_exists = await db.execute(select(Organization).where(Organization.id == dummy_org_id))
+            if not org_exists.scalar_one_or_none():
+                new_org = Organization(id=dummy_org_id, name="Default Org", slug="default-org")
+                db.add(new_org)
+                await db.flush()
+                
+            new_proj = Project(
+                id=jira_data.project_id,
+                organization_id=dummy_org_id,
+                name="Default Project",
+                description="Auto-created for UI testing"
+            )
+            db.add(new_proj)
+            await db.flush()
+
         encrypted_token = encrypt_token(jira_data.jira_api_token) if jira_data.jira_api_token else None
 
         new_jira_project = JiraProject(
@@ -79,6 +101,22 @@ async def map_jira_project(
         raise
     except Exception as e:
         await db.rollback()
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ---------------------------------------------------------------------------
+# GET /jira/  — List saved Jira projects
+# ---------------------------------------------------------------------------
+@router.get("/", response_model=list[JiraProjectResponse])
+async def list_saved_jira_integrations(
+    project_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """List all Jira credentials saved for a given internal project."""
+    try:
+        result = await db.execute(select(JiraProject).where(JiraProject.project_id == project_id))
+        return result.scalars().all()
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
