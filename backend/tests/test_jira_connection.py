@@ -1,5 +1,5 @@
 """
-Temporary connection test — validates Jira API credentials.
+Temporary connection test — validates Jira API credentials (Legacy ENV method).
 Run: python -m pytest tests/test_jira_connection.py -v -s
 """
 import asyncio
@@ -26,7 +26,11 @@ async def test_jira_connection():
 
     print(f"\nConfigurações lidas: {settings.JIRA_BASE_URL} | {settings.JIRA_EMAIL}")
 
-    jira_service = JiraService()
+    jira_service = JiraService(
+        base_url=settings.JIRA_BASE_URL,
+        email=settings.JIRA_EMAIL,
+        api_token=settings.JIRA_API_TOKEN
+    )
 
     # Simple query to check authentication: Get current user
     # This endpoint just validates who we are logged in as
