@@ -1,12 +1,26 @@
 import { useState } from 'react';
+import { supabase } from '../services/supabase';
 
-// Replace mockSignUp with your real auth service when the backend is wired in.
-const mockSignUp = async ({ name, email }) => {
-  await new Promise((resolve) => setTimeout(resolve, 1300));
-  if (email.endsWith('@blocked.com')) {
-    throw new Error('Email nao permitido.');
+// Função real que chama o Supabase Auth
+const signUpUser = async ({ name, email, password }) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        // Envia o nome real do usuário para o meta_data
+        // Nossa Trigger no banco de dados (SQL) vai ler isso
+        // e inserir na tabela `public.profiles` (display_name)
+        full_name: name,
+        name: name,
+      }
+    }
+  });
+
+  if (error) {
+    throw new Error(error.message);
   }
-  return { ok: true, name };
+  return { ok: true, user: data.user };
 };
 
 export function useRegisterForm() {
@@ -57,10 +71,14 @@ export function useRegisterForm() {
     setApiError('');
 
     try {
-      await mockSignUp(fields);
+      await signUpUser(fields);
       setSuccess(true);
     } catch (error) {
-      setApiError(error.message);
+      // Traduz erros comuns do Supabase para pt-br
+      let msg = error.message;
+      if (msg.includes('already registered')) msg = 'Este email já está cadastrado.';
+      else if (msg.includes('Password should be')) msg = 'A senha informada é fraca demais.';
+      setApiError(msg);
     } finally {
       setLoading(false);
     }

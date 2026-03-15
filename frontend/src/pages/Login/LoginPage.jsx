@@ -1,7 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AuthCard from '../../components/AuthCard/AuthCard';
+import { supabase } from '../../services/supabase';
 
 function LoginPage({ onNavigate }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setErrorMsg('');
+    setLoading(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      if (error.message.includes('Invalid login credentials')) {
+        setErrorMsg('Email ou senha inválidos.');
+      } else {
+        setErrorMsg(error.message);
+      }
+    } else {
+      // Sucesso! O redirecionamento você (usuário) mencionou que fará depois,
+      // mas vamos adicionar um log ou alert básico apenas para validar a integração.
+      alert(`Login bem-sucedido! Bem-vindo de volta.`);
+      // onNavigate('dashboard'); // Exemplo
+    }
+  };
+
   return (
     <AuthCard
       title="Bem-vindo de volta"
@@ -13,7 +45,12 @@ function LoginPage({ onNavigate }) {
         </>
       )}
     >
-      <form className="auth-form" onSubmit={(event) => event.preventDefault()}>
+      <form className="auth-form" onSubmit={handleLogin}>
+        {errorMsg && (
+          <div style={{ color: '#f47070', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>
+            {errorMsg}
+          </div>
+        )}
         <div className="auth-field">
           <label className="auth-label" htmlFor="login-email">Email</label>
           <input
@@ -22,6 +59,9 @@ function LoginPage({ onNavigate }) {
             className="auth-input"
             placeholder="seu@email.com"
             autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
         <div className="auth-field">
@@ -32,13 +72,15 @@ function LoginPage({ onNavigate }) {
             className="auth-input"
             placeholder="Sua senha"
             autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
-        <button type="submit" className="auth-submit">Entrar</button>
+        <button type="submit" className="auth-submit" disabled={loading}>
+          {loading ? 'Entrando...' : 'Entrar'}
+        </button>
       </form>
-      <p className="auth-helper">
-        Fluxo de login mantido como placeholder visual ate a integracao real.
-      </p>
     </AuthCard>
   );
 }
